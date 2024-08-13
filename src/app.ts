@@ -13,7 +13,6 @@ app.use(
 app.use(express.json());
 
 app.use(urlencoded({ extended: true, limit: "16kb" }));
-
 // routes import
 import userRouter from "./router/user.router";
 

@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,6 +11,7 @@ model User {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   email     String    @unique
+  imageLink String
   password  String
   role      UserRole
   createdAt DateTime  @default(now())
@@ -25,13 +25,16 @@ model Company {
   userId      String      @db.ObjectId
   name        String
   description String
-  niche       String
+  bannerLink  String[]
+  logoLink    String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  Category    Category    @relation(fields: [categoryId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
   products    Product[]
   leads       Lead[]
   membership  Membership?
+  categoryId  String      @db.ObjectId
 }
 
 model Product {
@@ -39,6 +42,7 @@ model Product {
   companyId   String   @db.ObjectId
   name        String
   description String
+  imageLink   String[]
   category    String
   priceSingle Float
   priceLot    Float
@@ -73,10 +77,12 @@ model Membership {
 }
 
 model Category {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  imageLink String[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Company   Company[]
 }
 
 enum UserRole {

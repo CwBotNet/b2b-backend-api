@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { db } from "../lib";
 import { ApiError, ApiResponce, asyncHandler } from "../utils";
+import { uploadOnCloudinary } from "../utils/Cloudinary";
 
 // user creation logic
 const createUser = asyncHandler(async (req, res) => {
@@ -10,11 +11,21 @@ const createUser = asyncHandler(async (req, res) => {
 
     // jwt logic
 
+    // image path
+    // @ts-ignore
+    const avatarLocalPath = await req.files?.avatar[0]?.path;
+
+    console.log(avatarLocalPath);
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+    if (!avatar) throw new ApiError(403, "cloudinary image upload error");
     const user = await db.user.create({
       data: {
         name: name,
         email: email,
         password: password,
+        imageLink: avatar?.url || "",
         role: "normal",
       },
       select: {
@@ -52,6 +63,7 @@ const getUserById = asyncHandler(async (req, res) => {
         id: true,
         name: true,
         email: true,
+        imageLink: true,
         role: true,
         companies: true,
         createdAt: true,
