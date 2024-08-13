@@ -67,12 +67,55 @@ const getUserById = asyncHandler(async (req, res) => {
   }
 });
 
-// user fetching by ID for admin
-
-// fetching all users for admin
-
 // user update logic
+const updateUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, email, password } = req.body;
+  try {
+    const updateUser = await db.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        name,
+        email,
+        password,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    if (!updateUser)
+      throw new ApiError(403, "unable to update the user details");
+    return res
+      .status(200)
+      .json(new ApiResponce(200, updateUser, "user updated"));
+  } catch (error) {
+    console.log("error", error);
+    throw new ApiError(500, "servere error: unable to update the user details");
+  }
+});
 
 // user delete logic
+const deleteUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await db.user.delete({
+      where: {
+        id: id,
+      },
+    });
+    if (!user) throw new ApiError(404, "user not found");
+    return res
+      .status(200)
+      .json(new ApiResponce(200, user.id, "user deleted successfully"));
+  } catch (error) {
+    console.log("error", error);
+    throw new ApiError(500, "server error: unable to delete the user");
+  }
+});
 
-export { createUser, getUserById };
+export { createUser, getUserById, updateUser, deleteUser };
