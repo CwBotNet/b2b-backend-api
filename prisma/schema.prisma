@@ -1,0 +1,92 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String    @unique
+  password  String
+  role      UserRole
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  companies Company[]
+  leads     Lead[]
+}
+
+model Company {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  name        String
+  description String
+  niche       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id])
+  products    Product[]
+  leads       Lead[]
+  membership  Membership?
+}
+
+model Product {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String   @db.ObjectId
+  name        String
+  description String
+  category    String
+  priceSingle Float
+  priceLot    Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id])
+  Lead        Lead[]
+}
+
+model Lead {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  companyId   String   @db.ObjectId
+  productId   String   @db.ObjectId
+  userId      String   @db.ObjectId
+  contactInfo Json
+  createdAt   DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Membership {
+  id         String         @id @default(auto()) @map("_id") @db.ObjectId
+  companyId  String         @unique @db.ObjectId
+  plan       MembershipPlan
+  leadsLimit Int
+  price      Float
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime       @default(now())
+  company    Company        @relation(fields: [companyId], references: [id])
+}
+
+model Category {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  normal
+  company
+  admin
+}
+
+enum MembershipPlan {
+  basic
+  premium
+  enterprise
+}
