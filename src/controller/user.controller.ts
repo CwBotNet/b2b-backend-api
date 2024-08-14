@@ -1,16 +1,16 @@
-import { PrismaClient } from "@prisma/client";
-import { db } from "../lib";
+import { db, hashPassword, passwordCheck } from "../lib";
 import { ApiError, ApiResponce, asyncHandler } from "../utils";
 import { uploadOnCloudinary } from "../utils/Cloudinary";
+import jwt from "jsonwebtoken";
 
 // user creation logic
-const createUser = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
   try {
     const { name, email, password } = req.body;
     console.log({ name, email, password });
 
-    // jwt logic
-
+    // password hashing before save
+    const hashedPassword = await hashPassword(password);
     // image path
     // @ts-ignore
     const avatarLocalPath = await req.files?.avatar[0]?.path;
@@ -20,11 +20,12 @@ const createUser = asyncHandler(async (req, res) => {
     const avatar = await uploadOnCloudinary(avatarLocalPath);
 
     if (!avatar) throw new ApiError(403, "cloudinary image upload error");
+
     const user = await db.user.create({
       data: {
         name: name,
         email: email,
-        password: password,
+        password: hashedPassword,
         imageLink: avatar?.url || "",
         role: "normal",
       },
@@ -50,8 +51,49 @@ const createUser = asyncHandler(async (req, res) => {
   }
 });
 
-// user fetcing byId logic
+// login user
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await db.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
 
+    if (!user) throw new ApiError(404, "user not found");
+
+    const isMatch = await passwordCheck(password, user.password);
+
+    if (!isMatch) throw new ApiError(404, "password not matched");
+
+    // cookie options
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    };
+
+    const tokenData = {
+      id: user.id,
+      role: user.role,
+    };
+
+    // jwt logic
+    const token = jwt.sign(tokenData, process.env.JWT_SECRET_KEY as string);
+    console.log({ token: token });
+    return res
+      .status(200)
+      .cookie("token", token, cookieOptions)
+      .json(new ApiResponce(200, "login successful"));
+  } catch (error) {
+    console.log("error", error);
+    throw new ApiError(500, "server error unable to login");
+  }
+});
+
+
+// user fetcing byId logic
 const getUserById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
@@ -130,4 +172,4 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
-export { createUser, getUserById, updateUser, deleteUser };
+export { registerUser, getUserById, updateUser, deleteUser, loginUser };

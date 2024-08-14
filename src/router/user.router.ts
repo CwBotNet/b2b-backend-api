@@ -1,15 +1,27 @@
 // router config
 
 import { Router } from "express";
-import { createUser, deleteUser, getUserById, updateUser } from "../controller";
+import {
+  registerUser,
+  loginUser,
+  deleteUser,
+  getUserById,
+  updateUser,
+} from "../controller";
 import { upload } from "../middlerware";
+import { authCheck } from "../middlerware/auth.middleware";
 
 const router = Router();
 router
   .route("/register")
-  .post(upload.fields([{ name: "avatar", maxCount: 1 }]), createUser);
-router.route("/:id").get(getUserById);
+  .post(upload.fields([{ name: "avatar", maxCount: 1 }]), registerUser);
+
+router.route("/login").post(loginUser);
+
+router.route("/:id").get(authCheck, getUserById);
+
 router.route("/:id").put(
+  authCheck,
   upload.fields([
     {
       name: "avatar",
@@ -18,6 +30,6 @@ router.route("/:id").put(
   ]),
   updateUser
 );
-router.route("/:id").delete(deleteUser);
+router.route("/:id").delete(authCheck, deleteUser);
 
 export default router;
