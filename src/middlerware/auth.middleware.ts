@@ -22,6 +22,7 @@ export const authCheck = asyncHandler(async (req: any, _, next) => {
         id: tokenData.id,
       },
       select: {
+        id: true,
         name: true,
         email: true,
         imageLink: true,

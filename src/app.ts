@@ -16,7 +16,15 @@ app.use(cookieParser());
 // routes import
 import userRouter from "./router/user.router";
 import authRouter from "./router/auth.router";
-app.use("/api/v1/user", userRouter);
+import companyRouter from "./router/company.router";
+import categoryRouter from "./router/category.router";
+// auth
 app.use("/api/v1/auth", authRouter);
+// user
+app.use("/api/v1/user", userRouter);
+// company
+app.use("/api/v1/company", companyRouter);
+// category
+app.use("/api/v1/category", categoryRouter);
 
 export { app };

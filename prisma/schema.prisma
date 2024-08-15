@@ -25,7 +25,7 @@ model Company {
   userId      String      @db.ObjectId
   name        String
   description String
-  bannerLink  String[]
+  bannerLink  String
   logoLink    String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -79,7 +79,7 @@ model Membership {
 model Category {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  imageLink String[]
+  imageLink String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   Company   Company[]
