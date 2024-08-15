@@ -44,12 +44,79 @@ const registerCompany = asyncHandler(async (req: any, res) => {
 });
 
 // get company
-const getCompany = asyncHandler(async (req, res) => {});
+const getCompany = asyncHandler(async (req: any, res) => {
+  try {
+    const company = await db.company.findMany({
+      where: {
+        userId: await req.user.id,
+      },
+    });
+
+    if (!company) throw new ApiError(404, "company not found");
+
+    return res
+      .status(200)
+      .json(new ApiResponce(200, company, "company fetched"));
+  } catch (error: any) {
+    console.log("error", error?.message);
+    throw new ApiError(500, "server error unable to fetch the company");
+  }
+});
 
 // update company
-const updateCompany = asyncHandler(async (req, res) => {});
+const updateCompany = asyncHandler(async (req: any, res) => {
+  const { id } = req.params;
+  const { name, description, category } = req.body;
+  try {
+    // logo and banner
+    const logo = req.files?.logo[0]?.path;
+    const banner = req.files?.banner[0]?.path;
+    const logoLink = await uploadOnCloudinary(logo);
+    const bannerLink = await uploadOnCloudinary(banner);
+
+    if (!logoLink) throw new ApiError(403, "cloudinary image upload error");
+
+    if (!bannerLink) throw new ApiError(403, "cloudinary image upload error");
+
+    const updateCompany = await db.company.update({
+      where: {
+        id: id,
+      },
+      data: {
+        name: name,
+        description: description,
+        categoryId: category,
+        bannerLink: logoLink.url,
+        logoLink: bannerLink.url,
+      },
+    });
+
+    if (!updateCompany) throw new ApiError(404, "server err while updating");
+
+    return res.status(200).json(new ApiResponce(200, updateCompany, "updated"));
+  } catch (e: any) {
+    console.log("error", e.message);
+    throw new ApiError(500, "server error unable to update the company");
+  }
+});
 
 // delete Company
-const deleteCompany = asyncHandler(async (req, res) => {});
+const deleteCompany = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  try {
+    const company = await db.company.delete({
+      where: {
+        id: id,
+      },
+    });
+    if (!company) throw new ApiError(404, "company not found");
+    return res
+      .status(200)
+      .json(new ApiResponce(200, company.id, "company deleted successfully"));
+  } catch (error) {
+    console.log("error", error);
+    throw new ApiError(500, "server error: unable to delete the company");
+  }
+});
 
 export { registerCompany, getCompany, updateCompany, deleteCompany };
