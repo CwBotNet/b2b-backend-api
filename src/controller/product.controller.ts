@@ -54,12 +54,72 @@ const createProduct = asyncHandler(async (req: any, res) => {
     .json(new ApiResponce(200, product, "product created successfully"));
 });
 
-const getProduct = asyncHandler(async (req: any, res) => {});
+const getProduct = asyncHandler(async (req: any, res) => {
+  const { id } = req.params;
+  const product = await db.product.findUnique({
+    where: {
+      id: id,
+    },
+  });
+  if (!product) return new ApiError(404, "product not found");
+  return res.status(200).json(new ApiResponce(200, product, "product found"));
+});
 
-const getProducts = asyncHandler(async (req: any, res) => {});
+const getProducts = asyncHandler(async (req: any, res) => {
+  const products = await db.product.findMany({});
+  if (!products) return new ApiError(404, "products not found");
+  return res.status(200).json(new ApiResponce(200, products, "products found"));
+});
 
-const updateProduct = asyncHandler(async (req: any, res) => {});
+const updateProduct = asyncHandler(async (req: any, res) => {
+  const { id } = req.params;
+  const { name, priceSingle, priceLot, category, description } = req.body;
+  const files = req.files as Express.Multer.File[]; // Assuming `files` is an array of image files
 
-const deleteProduct = asyncHandler(async (req: any, res) => {});
+  // Upload each image to Cloudinary and collect the URLs
+  const imageUrls: string[] = await Promise.all(
+    files.map(async (file) => {
+      const result = await uploadOnCloudinary(file.path);
+      if (result) {
+        return result.secure_url;
+      } else {
+        throw new ApiError(500, "Image upload failed");
+      }
+    })
+  );
+  if (!name || !description || !category || !priceSingle || !priceLot) {
+    throw new ApiError(400, "some fileds are missing");
+  }
+  const product = await db.product.update({
+    where: {
+      id: id,
+    },
+    data: {
+      name,
+      category,
+      description,
+      imageLink: imageUrls,
+      priceSingle: parseFloat(priceSingle),
+      priceLot: parseFloat(priceLot),
+    },
+  });
+  if (!product) return new ApiError(404, "product not found");
+  return res
+    .status(200)
+    .json(new ApiResponce(200, product, "product updated successfully"));
+});
+
+const deleteProduct = asyncHandler(async (req: any, res) => {
+  const { id } = req.params;
+  const product = await db.product.delete({
+    where: {
+      id: id,
+    },
+  });
+  if (!product) return new ApiError(404, "product not found");
+  return res
+    .status(200)
+    .json(new ApiResponce(200, product, "product deleted successfully"));
+});
 
 export { createProduct, getProduct, getProducts, updateProduct, deleteProduct };

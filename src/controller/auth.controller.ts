@@ -1,3 +1,0 @@
-// user auth
-
-// admin auth
